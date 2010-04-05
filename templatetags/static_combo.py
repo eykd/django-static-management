@@ -3,7 +3,6 @@ import time
 
 from django import template
 from django.conf import settings
-from static_management.lib import static_combine
 
 register = template.Library()
 
@@ -40,7 +39,7 @@ def _group_file_names_and_output(parent_name, output_format, inheritance_key):
     except AttributeError:
         raise template.TemplateSyntaxError, "%s not in static combo settings" % parent_name
     output = ''
-    if settings.DEBUG:
+    if settings.DEBUG or settings.DEBUG_JS:
         # we need to echo out each one
         media_url = settings.MEDIA_URL
         for file_name in file_names:

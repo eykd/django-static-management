@@ -8,15 +8,15 @@ from static_management.lib import static_combine
 register = template.Library()
 
 @register.simple_tag
-def static_combo_css(file_name):
+def static_combo_css(file_name, media='all'):
     """combines files in settings
     
     {% static_combo_css "css/main.css" %}"""
     # override the default if an override exists
     try:
-        link_format = settings.STATIC_MANAGEMENT_CSS_LINK
+        link_format = settings.STATIC_MANAGEMENT_CSS_LINK % {'href': "%s", 'media': media}
     except AttributeError:
-        link_format = '<link rel="stylesheet" type="text/css" href="%s">\n'
+        link_format = '<link rel="stylesheet" type="text/css" href="%(href)s" media="%(media)s">\n' % {'href': "%s", 'media': media}
     output = _group_file_names_and_output(file_name, link_format, 'css')
     return output
 

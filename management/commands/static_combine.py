@@ -1,7 +1,8 @@
 import os
+from os.path import curdir, isdir
 import shutil
 import re
-from optparse import OptionParser, make_option
+from optparse import make_option
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -73,12 +74,16 @@ class Command(BaseCommand):
         for line in css:
             matches = []
             for match in re.finditer(CSS_ASSET_PATTERN, line):
+                if ';' in match.group():
+                    continue;
                 try:
                     grp = match.groups()
                     asset = relpath(os.path.join(os.path.dirname(rel_filename), grp[1]), settings.MEDIA_ROOT)
                     asset_version = 'url(%s)' % self.abs_versions[asset]
                     matches.append((grp[0], asset_version))
                 except KeyError:
+                    print "In %s:" % rel_filename
+                    print "  %s" % line
                     print "Failed to find %s in version map. Is it an absolute path?" % asset
                     raise SystemExit(1)
             for old, new in matches:

@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import exceptions
 
 from django.conf import settings
 from django.core import exceptions

@@ -26,9 +26,9 @@ def static_combo_js(file_name):
     {% static_combo_js "js/main.js" %}"""
     # override the default if an override exists
     try:
-        script_format = settings.STATIC_MANAGEMENT_SCRIPT_SRC
+        script_format = settings.STATIC_MANAGEMENT_SCRIPT_SRC % {'src': "%s"}
     except AttributeError:
-        script_format = '<script type="text/javascript" src="%s"></script>\n'
+        script_format = '<script type="text/javascript" src="%(src)s"></script>\n' % {'src': '%s'}
     output = _group_file_names_and_output(file_name, script_format, 'js')
     return output
 

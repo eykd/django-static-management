@@ -7,16 +7,17 @@ from django.conf import settings
 register = template.Library()
 
 @register.simple_tag
-def static_combo_css(file_name, media='all', alternate=True):
+def static_combo_css(file_name, media='all', alternate=False):
     """combines files in settings
     
     {% static_combo_css "css/main.css" %}"""
     # override the default if an override exists
+    alt = alternate and "alternate " or ""
     try:
-        link_format = settings.STATIC_MANAGEMENT_CSS_LINK % {'href': "%s", 'media': media}
+        link_format = settings.STATIC_MANAGEMENT_CSS_LINK % {'href': "%s", 'media': media, 'alt': alt}
     except AttributeError:
         link_format = '<link rel="%(alt)sstylesheet" type="text/css" href="%(href)s" media="%(media)s">\n' % {
-            'alt': alternate and "alternate " or "", 
+            'alt': alt, 
             'href': "%s", 
             'media': media
             }

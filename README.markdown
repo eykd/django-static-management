@@ -58,6 +58,7 @@ What happens is that files inside `css` and `js` are combined as follows:
 1. `css/mymainfile.css` (the "key" of the key/value pair) is the target file, which is created automatically from the list of files (the "value" of the key/value pair) beside it;
 2. If the files do not exist, the entire file is skipped;
 3. Paths are *relative* to `settings.MEDIA_ROOT` (so you're unlikely to need to move files around in an already working Django project).
+4. The combined css file should be in the same directory as the files it's constructed from.
 
 Other files may inherit from `css/mymainfile.css` (for example, IE hack files) by including it in their list of files, like so:
 
@@ -130,7 +131,7 @@ Custom versioners are simple callables that take a single filename argument.
 If the `STATIC_MANAGEMENT_ASSET_PATHS` value is set, the combiner will traverse the filesystem looking for files which match the `STATIC_MANAGEMENT_ASSET_PATTERN` regular expression, adding them to the `STATIC_MANAGEMENT_VERSIONS` setting.  For example:
 
     STATIC_MANAGEMENT_ASSET_PATHS = [('static/swf/', False), ('static/img/', False)]
-    STATIC_MANAGEMENT_ASSET_PATTERN = .*(\.(png|jpg|gif|swf))
+    STATIC_MANAGEMENT_ASSET_PATTERN = '.*(\.(png|jpg|gif|swf))'
 
 `STATIC_MANAGEMENT_ASSET_PATHS` should include a list of pairs where the first element is the path and the second is a boolean value which specifies whether or not the path should be recursed.
 
@@ -153,11 +154,11 @@ where `%s` represents the path of the file to be compressed.
 
 #### Versioning
 
-The `--output` argument will generate a list of versioned filenames and output them using the method of your choice, as specified in: `settings.STATIC_MANAGEMENT_VERSION_WRITER`.  This should be a callable which takes a dictionary of the structured defined above in `STATIC_MANAGEMENT_VERSIONS`.
+The `--output` argument will generate a list of versioned filenames and output them using the method of your choice, as specified in: `settings.STATIC_MANAGEMENT_VERSION_WRITER`.  This should be the name of a callable object or class, which takes a dictionary of the structured defined above in `STATIC_MANAGEMENT_VERSIONS.
 
 Note: It is often useful to use this mechanism to write the list of files to a configuration file and read from the same file in `settings.py`.
 
-The `--version` argument will copy the relatively filename (e.g. `js/main.js`) to the versioned filename (e.g. `js/main.123456.js`).
+The `--write-version` argument will copy the relative filename (e.g. `js/main.js`) to the versioned filename (e.g. `js/main.123456.js`).
 
 Using this within a Django project
 ----------------------------------

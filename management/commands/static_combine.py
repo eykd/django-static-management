@@ -9,21 +9,26 @@ from django.conf import settings
 
 from static_management.lib import static_combine, get_version, write_versions
 
-# TODO: Use user-supplied pattern?
-CSS_ASSET_PATTERN = re.compile('(url\(((.*?)\.([a-z]{3,4}))\))')
+try:
+    CSS_ASSET_PATTERN = re.compile(settings.STATIC_MANAGEMENT_CSS_ASSET_PATTERN)
+except AttributeError:
+    CSS_ASSET_PATTERN = re.compile('(?P<url>url(\([\'"]?(?P<filename>[^)]+\.[a-z]{3,4})(?P<fragment>#\w+)?[\'"]?\)))')
 
-def relpath(path, start):
-    """This only works on POSIX systems and is ripped out of Python 2.6 posixpath.py"""
-    start_list = os.path.abspath(start).split('/')
-    path_list = os.path.abspath(path).split('/')
+try:
+    from os.path import relpath
+except ImportError:
+    def relpath(path, start):
+        """This only works on POSIX systems and is ripped out of Python 2.6 posixpath.py"""
+        start_list = os.path.abspath(start).split('/')
+        path_list = os.path.abspath(path).split('/')
 
-    # Work out how much of the filepath is shared by start and path.
-    i = len(os.path.commonprefix([start_list, path_list]))
+        # Work out how much of the filepath is shared by start and path.
+        i = len(os.path.commonprefix([start_list, path_list]))
 
-    rel_list = [os.path.pardir] * (len(start_list)-i) + path_list[i:]
-    if not rel_list:
-        return curdir
-    return os.path.join(*rel_list)
+        rel_list = [os.path.pardir] * (len(start_list)-i) + path_list[i:]
+        if not rel_list:
+            return curdir
+        return os.path.join(*rel_list)
 
 class Command(BaseCommand):
     """static management commands for static_combine argument"""
@@ -42,9 +47,12 @@ class Command(BaseCommand):
         self.css_files = []
         map(self.files_created.append, self.find_assets())
         self.combine_js()
-        self.combine_css()
+        # Do the get_versions for everything except the CSS
         self.get_versions()
+        self.combine_css()
         map(self.replace_css, self.css_files)
+        # Do the CSS get_versions only after having replaced all references in the CSS.
+        self.get_versions(css_only=True)
         self.write_versions()
     
     def combine_js(self):
@@ -77,10 +85,15 @@ class Command(BaseCommand):
                 if ';' in match.group():
                     continue;
                 try:
-                    grp = match.groups()
-                    asset = relpath(os.path.join(os.path.dirname(rel_filename), grp[1]), settings.MEDIA_ROOT)
-                    asset_version = 'url(%s)' % self.abs_versions[asset]
-                    matches.append((grp[0], asset_version))
+                    grp = match.groupdict()
+                    absolute = grp['filename'].startswith('/')
+                    if absolute:
+                        asset_path = os.path.join(settings.MEDIA_ROOT, '.'+grp['filename'])
+                    else:
+                        asset_path = os.path.join(os.path.dirname(rel_filename), grp['filename'])
+                    asset = relpath(asset_path, settings.MEDIA_ROOT)
+                    asset_version = 'url(%s%s)' % (self.abs_versions[asset], grp.get('fragment') or '')
+                    matches.append((grp['url'], asset_version))
                 except KeyError:
                     print "In %s:" % rel_filename
                     print "  %s" % line
@@ -107,14 +120,18 @@ class Command(BaseCommand):
                 else:
                     for filename in os.listdir(os.path.join(settings.MEDIA_ROOT, path)):
                         full_filename = os.path.join(settings.MEDIA_ROOT, os.path.join(path, filename))
-                        if not isdir(full_filename):
+                        if not os.path.isdir(full_filename):
                             if exp.match(filename):
                                 yield relpath(full_filename, settings.MEDIA_ROOT)
 
-    def get_versions(self):
+    def get_versions(self, css_only=False):
         hosts = settings.STATIC_MANAGEMENT_HOSTNAMES
         i = 0
-        for main_file in self.files_created:
+        if css_only:
+            files = self.css_files
+        else:
+            files = self.files_created
+        for main_file in files:
             if i > len(hosts) - 1:
                 i = 0
             version = get_version(os.path.join(settings.MEDIA_ROOT, main_file), main_file, settings.STATIC_MANAGEMENT_VERSIONER)

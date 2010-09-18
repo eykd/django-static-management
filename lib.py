@@ -4,6 +4,7 @@ import subprocess
 import exceptions
 
 from django.conf import settings
+from django.core import exceptions
 from django.core.management.base import CommandError
 
 def get_version(end_file, relative_filename, versioner):
@@ -41,7 +42,10 @@ def write_versions(versions, version_writer):
         v_class = getattr(mod, v_classname)
     except AttributeError:
         raise exceptions.ImproperlyConfigured, 'Version writer module "%s" does not define a "%s" class' % (v_module, v_classname)
-    v_class()(versions)
+    try:
+        v_class(versions)
+    except TypeError:
+        v_class()(versions)
 
 def static_combine(end_file, to_combine, delimiter="\n/* Begin: %s */\n", compress=False):
     """joins paths together to create a single file
@@ -50,7 +54,9 @@ def static_combine(end_file, to_combine, delimiter="\n/* Begin: %s */\n", compre
     
     delimiter is set to a Javascript and CSS safe comment to note where files 
     start"""
-    # open and clobber file
+    # FIXME this fails in the face of @import directives in the CSS.
+    # a) we need to move all remote @imports up to the top
+    # b) we need to recursively expand all local @imports
     combo_file = open(end_file, 'w')
     to_write = ''
     for static_file in to_combine:

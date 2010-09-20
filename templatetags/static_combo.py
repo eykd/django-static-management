@@ -8,9 +8,10 @@ register = template.Library()
 
 @register.simple_tag
 def static_combo_css(file_name, media='all', klass='', title='', alternate=False):
-    """combines files in settings
+    """Insert CSS <link> tag(s) for the given parent filename from settings.STATIC_MANAGEMENT.
     
-    {% static_combo_css "css/main.css" %}"""
+    {% static_combo_css "css/main.css" "<media>" "<class>" "<title>" "<alternate>" %}
+    """
     # override the default if an override exists
     alt = alternate and "alternate " or ""
     title = title and ('title="%s" ' % title) or ''

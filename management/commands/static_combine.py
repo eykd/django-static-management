@@ -12,7 +12,7 @@ from static_management.lib import static_combine, get_version, write_versions
 try:
     CSS_ASSET_PATTERN = re.compile(settings.STATIC_MANAGEMENT_CSS_ASSET_PATTERN)
 except AttributeError:
-    CSS_ASSET_PATTERN = re.compile('(?P<url>url(\([\'"]?(?P<filename>[^)]+\.[a-z]{3,4})(?P<fragment>#\w+)?[\'"]?\)))')
+    CSS_ASSET_PATTERN = re.compile('(?P<url>url(\([\'"]?(?!http:)(?P<filename>[^)]+\.[a-z]{3,4})(?P<fragment>#\w+)?[\'"]?\)))')
 
 try:
     from os.path import relpath
